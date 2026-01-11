@@ -24,6 +24,9 @@ services:
     hostname: 1c-server
     env_file:
       - .env
+    #environment:
+      # GUI Debug
+      #- DISPLAY=${DISPLAY}
     depends_on:
       1c-postgres:
         condition: service_healthy
@@ -32,6 +35,8 @@ services:
       - $SERVER_AGENT_PORT:1541
       - $SERVER_WEB_ADMIN_PORT:1542
     volumes:
+      # GUI Debug
+      #- /tmp/.X11-unix:/tmp/.X11-unix
       - 1c-server_opt:/1c_dir
       - 1c-server_licenses:/1c_licenses
       - 1c-server_data:/home/usr1cv8

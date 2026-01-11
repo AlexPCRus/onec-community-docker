@@ -1,36 +1,49 @@
 #!/bin/bash
 set -euo pipefail
 
-export BASE_ACT_PATH=/1c_dir/activation
-mkdir -p "${BASE_ACT_PATH}"
+LAST_LOG_FILE="1c_activation/log_$(date +%Y_%m_%d_%H_%M_%S).log"
 
-CURRENT_SERVICE_UP_TIME=$(date +%Y_%m_%d_%H_%M_%S)
-export CURRENT_SERVICE_UP_TIME
+touch "$LAST_LOG_FILE"
+exec > >(tee -a "$LAST_LOG_FILE") 2>&1
 
-export LOG_FILE="${BASE_ACT_PATH}/log_${CURRENT_SERVICE_UP_TIME}.log"
-
-touch "${LOG_FILE}"
-exec > >(tee -a "$LOG_FILE") 2>&1
-
-if /1c_scripts/license_expiring_soon.sh >/dev/null 2>&1; then
-    echo "[INFO] Need to [re]activate on the server side... Please, wait until finished."
-    /1c_scripts/license_activator.sh
-fi
-
-echo "[INFO] The ragent is started."
+echo "[INFO] Starting ragent..."
 gosu usr1cv8 /1c_ragent \
   -debug \
-  -d /var/1C/1cv8 \
+  -d /home/usr1cv8/.1cv8/1C/1cv8 \
   -port 1540 \
-  -regport 1541 &
+  -regport 1541 \
+  -range 1560:1591 \
+  -pingPeriod 1000 \
+  -pingTimeout 5000 &
 
-until ss -ltn | grep -q ":1540"; do
+echo "[INFO] Waiting for Ragent to be ready..."
+until ss -ltn 2>/dev/null | grep -q ":1540" || true; do
   sleep 1
 done
 
 echo "[INFO] Starting ras..."
 gosu usr1cv8 /1c_ras cluster \
   --port 1545 \
-  localhost:1540 &
+  "$HOSTNAME":1540 &
+
+CLUSTER_HOST="$HOSTNAME":1545
+CLUSTER_ID=""
+
+echo "[INFO] Waiting for RAS to be ready..."
+until [[ -n "$CLUSTER_ID" ]]; do
+  CLUSTER_ID=$(/1c_rac "$CLUSTER_HOST" cluster list 2>/dev/null | grep -oP 'cluster\s*:\s*\K[0-9a-f-]+' | head -n1 || true)
+  echo "$CLUSTER_ID"
+  sleep 1
+done
+
+export CLUSTER_HOST CLUSTER_ID
+echo "[INFO] Using  cluster host: $CLUSTER_HOST, cluster ID: $CLUSTER_ID"
+
+if /1c_scripts/license_expiring_soon.sh >/dev/null 2>&1; then
+    echo "[INFO] Need to [re]activate on the server side... Please, wait until finished."
+    /1c_scripts/license_activator.sh
+fi
+
+echo "[INFO] The service is started successfully"
 
 wait
