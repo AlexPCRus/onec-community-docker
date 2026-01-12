@@ -44,7 +44,7 @@
 - [Скачать исходный код](https://codeload.github.com/alexandermyasnikov123/onec-community-docker/zip/refs/heads/master) данного репозитория
 - [Установить Docker](https://docs.docker.com/engine/install/) на вашу Linux систему
 - Скачать [дистрибутив 1С:Предприятие 8.3](https://developer.1c.ru/applications/Console?state=community) с поддержкой community лицензии
-- Скопировать из скачанного дистрибутива файл `setup-full-8.3*.run` в директорию `/путь/до/исходного-кода/my-onec-docker/distr/`
+- Скопировать из скачанного дистрибутива файл `setup-full-8.3*.run` в директорию `/путь/до/исходного-кода/onec-community-docker/distr/`
 - Изменить в файле `.env` следующие значения переменных: 
   1. `PLATFORM_VERSION` (версия дистрибутива, которую вы загрузили ранее) 
   2. `DEV_LOGIN` (логин от портала разработчиков)
