@@ -54,25 +54,16 @@ RUN chmod +x /tmp/installer.run && \
     /tmp/installer.run --mode unattended --enable-components ${SERVER_COMPONENTS} && \
     rm /tmp/installer.run
 
-RUN ln -s /opt/1cv8/conf /1c_conf && \
-    mkdir -p /opt/1cv8/scripts &&  \
-    ln -s /opt/1cv8/scripts /1c_scripts && \
-    ln -s /opt/1cv8/${PLATFORM_ARCH}/${PLATFORM_VERSION} /1c_dir && \
-    ln -s /var/1C/licenses /1c_licenses && \
-    ln -s /1c_dir/ragent /1c_ragent && \
-    ln -s /1c_dir/ras /1c_ras && \
-    ln -s /1c_dir/rac /1c_rac && \
-    mkdir -p /1c_dir/activation && \
-    ln -s /1c_dir/activation /1c_activation
-
-VOLUME /1c_dir /1c_licenses /home/usr1cv8
-
-EXPOSE ${SERVER_PORT} ${SERVER_AGENT_PORT}
+EXPOSE 1540 1541 1545 1560-1591
 
 ENV COMMUNITY_LICENSE_ACTIVATOR=ActivateCommunity.epf
+ENV PLATFORM_VERSION=$PLATFORM_VERSION PLATFORM_ARCH=$PLATFORM_ARCH
 
-COPY /${COMMUNITY_LICENSE_ACTIVATOR} /1c_dir/activation/
-COPY /1c-server/*.sh /1c_scripts/
-RUN chmod +x /1c_scripts/*.sh
+COPY /1c-server/*.sh /opt/1cv8/scripts/
+RUN chmod +x /opt/1cv8/scripts/*.sh && /opt/1cv8/scripts/init_symlinks.sh
+
+COPY /${COMMUNITY_LICENSE_ACTIVATOR} /1c_activation
+
+VOLUME /1c_conf /1c_licenses /1c_user_home
 
 ENTRYPOINT ["/1c_scripts/entrypoint.sh"]

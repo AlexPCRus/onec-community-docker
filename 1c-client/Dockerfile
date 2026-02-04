@@ -79,12 +79,13 @@ RUN chmod +x /tmp/installer.run && \
 
 RUN ln -s /opt/1cv8/${PLATFORM_ARCH}/${PLATFORM_VERSION} /1c_dir && \
     mkdir -p /opt/1cv8/scripts &&  \
-    ln -s /opt/1cv8/scripts /1c_scripts
+    ln -s /opt/1cv8/scripts /1c_scripts && \
+    ln -s /home/usr1cv8 /1c_user_home
 
 COPY /1c-client/*.sh /1c_scripts/
 RUN chmod +x /1c_scripts/*.sh
 
-VOLUME /home/usr1cv8
+VOLUME /1c_user_home
 
 ENTRYPOINT ["/1c_scripts/entrypoint.sh"]
 CMD ["/1c_scripts/run_launcher.sh"]
