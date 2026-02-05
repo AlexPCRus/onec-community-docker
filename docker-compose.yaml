@@ -52,11 +52,17 @@ services:
     env_file:
       - .env
     environment:
+      # Host user id, user group id
+      - HOST_UID=${HOST_UID}
+      - HOST_GID=${HOST_GID}
       - DISPLAY=$DISPLAY
       - XAUTHORITY=/tmp/.docker.xauth
       - QT_X11_NO_MITSHM=1
       - _X11_NO_MITSHM=1
-      - _MITSHM=0
+      # Wayland specific env
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY}
+      - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}
+      - QT_QPA_PLATFORM=xcb
     depends_on:
       - 1c-server
     volumes:
@@ -64,6 +70,8 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ${XAUTHORITY}:/tmp/.docker.xauth:rw
       - ${HOME}/.Xauthority:/root/.Xauthority:ro
+      # Wayland specific volume
+      - ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}:ro
     stdin_open: true
     tty: true
     restart: no
