@@ -5,7 +5,7 @@ services:
     volumes:
       - 1c-postgres_data:/var/lib/pgpro/1c-17/data
     ports:
-      - $ONEC_PG_PORT:5432
+      - $ONEC_PG_DATABASE_PORT:5432
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       start_period: 2s
@@ -31,15 +31,15 @@ services:
       1c-postgres:
         condition: service_healthy
     ports:
-      - $SERVER_PORT:1540
-      - $SERVER_AGENT_PORT:1541
-      - $SERVER_WEB_ADMIN_PORT:1542
+      - $SERVER_AGENT_PORT:1540
+      - $SERVER_CLUSTER_PORT:1541
+      - $SERVER_ADMIN_PORT:1545
+      - $SERVER_RPHOST_PORT_RANGE:1560-1591
     volumes:
       # GUI Debug
       #- /tmp/.X11-unix:/tmp/.X11-unix
-      - 1c-server_opt:/1c_dir
       - 1c-server_licenses:/1c_licenses
-      - 1c-server_data:/home/usr1cv8
+      - 1c-server_data:/1c_user_home
     restart: no
 
   1c-client:
@@ -52,18 +52,26 @@ services:
     env_file:
       - .env
     environment:
+      # Host user id, user group id
+      - HOST_UID=${HOST_UID}
+      - HOST_GID=${HOST_GID}
       - DISPLAY=$DISPLAY
       - XAUTHORITY=/tmp/.docker.xauth
       - QT_X11_NO_MITSHM=1
       - _X11_NO_MITSHM=1
-      - _MITSHM=0
+      # Wayland specific env
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY}
+      - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}
+      - QT_QPA_PLATFORM=xcb
     depends_on:
       - 1c-server
     volumes:
-      - 1c-client_home:/home/usr1cv8
+      - 1c-client_data:/1c_user_home
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ${XAUTHORITY}:/tmp/.docker.xauth:rw
       - ${HOME}/.Xauthority:/root/.Xauthority:ro
+      # Wayland specific volume
+      - ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}:ro
     stdin_open: true
     tty: true
     restart: no
@@ -75,13 +83,6 @@ volumes:
       type: none
       o: bind
       device: ${BASE_MOUNT_DIR}/data/1c-postgres_data
-
-  1c-server_opt:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${BASE_MOUNT_DIR}/data/1c-server_opt
 
   1c-server_licenses:
     driver: local
@@ -97,9 +98,9 @@ volumes:
       o: bind
       device: ${BASE_MOUNT_DIR}/data/1c-server_data
 
-  1c-client_home:
+  1c-client_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${BASE_MOUNT_DIR}/data/1c-client_home
+      device: ${BASE_MOUNT_DIR}/data/1c-client_data
